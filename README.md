@@ -16,6 +16,10 @@ template itself.
 4. Protect `main` (branch protection or a ruleset): require a pull request, require the checks `Backend Checks`
    and `pr-title / check`, block force pushes and deletion; approvals 0, or 1 with the owner on the bypass list.
 5. Select the repo in the Mend Renovate app.
+   Also turn on secret scanning, push protection and Dependabot alerts (Settings > Advanced Security); the
+   template does not copy them:
+   `gh api -X PATCH repos/<org>/<repo> -f 'security_and_analysis[secret_scanning][status]=enabled' -f 'security_and_analysis[secret_scanning_push_protection][status]=enabled'`
+   and `gh api -X PUT repos/<org>/<repo>/vulnerability-alerts`.
 6. Add the repo to the conformance probe TARGETS.
 
 The first run on `main` is red by design (the image build has no `HEAD^` to diff against), and `release`

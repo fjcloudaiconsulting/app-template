@@ -29,6 +29,10 @@ class HealthzTest(unittest.TestCase):
             self.assertEqual(r.status, 200)
             self.assertEqual(json.load(r), {"status": "ok", "version": "1.2.3", "revision": "abc123"})
 
+    def test_healthz_ignores_query_string(self):
+        with urllib.request.urlopen(self.base + "/api/healthz?probe=1") as r:
+            self.assertEqual(r.status, 200)
+
     def test_other_path_404(self):
         with self.assertRaises(urllib.error.HTTPError) as c:
             urllib.request.urlopen(self.base + "/nope")

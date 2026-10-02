@@ -1,11 +1,12 @@
 import json
 import os
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from urllib.parse import urlsplit
 
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
-        if self.path != "/api/healthz":
+        if urlsplit(self.path).path != "/api/healthz":
             self.send_error(404)
             return
         body = json.dumps({

@@ -1,0 +1,11 @@
+# Post-release smoke test (shared smoke workflow): the published images by tag, no build.
+services:
+  # One-shot: the workflow runs it twice (the second run must be a no-op) before `up`.
+  migrations:
+    image: ${IMAGE_PREFIX}/migrations:${TAG}
+    profiles: [migrate]
+
+  backend:
+    image: ${IMAGE_PREFIX}/backend:${TAG}
+    ports:
+      - "8000:8000"

@@ -3,7 +3,8 @@ FROM python:3.13-slim@sha256:bb2988715db2cf7ace7b53f38f3cffbef7c7046a656bee66245
 RUN useradd --system --uid 10001 --no-create-home app
 WORKDIR /app
 COPY app.py .
-# Build-time only; the shared build-image workflow passes them.
+# Build-time only; the shared build-image workflow passes exactly these ARG names. Keep them when renaming
+# the app prefix and map them to your own ENV names instead.
 ARG APP_VERSION
 ARG APP_REVISION
 ENV APP_VERSION=$APP_VERSION \

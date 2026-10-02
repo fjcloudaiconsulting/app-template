@@ -25,6 +25,13 @@ fails until the App from step 1 exists.
   (`prod`, and a placeholder `migrations` target to replace with the project's tool; it must be idempotent).
 - `compose.yaml`: local dev. `compose.smoke.yaml`: published images by tag, used by the shared smoke test.
 - `.env.example`: configuration uses the `APP_` prefix.
+- `CONTRIBUTING.md`: deviations from the contract's SHOULDs, with reasons.
+
+## When you add a database
+
+Replace the `migrations` placeholder (`CMD ["true"]`) with the project's migration tool, and run it twice
+against an empty database in the `test` job so CI proves it is idempotent (contract section 6). Add the
+database to `compose.yaml` and `compose.smoke.yaml`.
 
 ## Adding a frontend
 

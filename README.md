@@ -29,9 +29,9 @@ fails until the App from step 1 exists.
 
 GitHub holds only what a workflow needs to run: credentials for CI, release and deploy steps (the two
 `release` secrets above, a deploy token such as `CLOUDFLARE_API_TOKEN`). Every value the app reads at
-runtime, secret or not, lives in a Kubernetes Secret or ConfigMap in
-[aws-infra](https://github.com/fjcloudaiconsulting/aws-infra) `clusters/`, SOPS-encrypted when secret, and
-reaches the pods through Flux. Never add an app runtime value as an Actions secret or variable: GitHub never
+runtime, secret or not, lives in [aws-infra](https://github.com/fjcloudaiconsulting/aws-infra) `clusters/`
+and reaches the pods through Flux: secrets in a SOPS-encrypted Secret, everything else as plain `env` in the
+app's manifests. Never add an app runtime value as an Actions secret or variable: GitHub never
 shows a secret back, so it cannot be recovered or checked. Each GitHub secret or variable must have a
 workflow that reads it; delete it when that workflow goes. Rule and inventory: aws-infra
 [docs/configuration-map.md](https://github.com/fjcloudaiconsulting/aws-infra/blob/main/docs/configuration-map.md#actions-secrets-and-variables).

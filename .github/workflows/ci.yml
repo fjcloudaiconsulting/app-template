@@ -15,20 +15,35 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  repo:
+    name: Repo Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Docker Hub rate-limits anonymous pulls from shared runners: pull through mirror.gcr.io.
+      - name: No Docker Hub images
+        uses: fjcloudaiconsulting/.github/actions/no-docker-hub@v1
+
   test:
-    name: Test
+    name: Backend Tests
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - run: python3 -m unittest
+      - name: Run backend tests
+        run: python3 -m unittest
 
   # Built once, on the main push, as sha-<7> (pull requests build without pushing). Release only retags these.
   image:
+    name: Image (${{ matrix.image }})
     strategy:
       matrix:
         include:
@@ -45,18 +60,19 @@ jobs:
   backend-checks:
     name: Backend Checks
     if: always()
-    needs: [test, image]
+    needs: [repo, test, image]
     runs-on: ubuntu-latest
     steps:
-      - env:
+      - name: Verify every gated job passed
+        env:
           NEEDS: ${{ toJSON(needs) }}
         run: jq -e 'all(.[]; .result == "success" or .result == "skipped")' <<<"$NEEDS"
 
   # Releases only when every job above passed on this commit of main.
   release:
-    name: Release PR and tag
+    name: Release
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [test, image]
+    needs: [repo, test, image]
     runs-on: ubuntu-latest
     environment: release
     permissions:
@@ -67,14 +83,16 @@ jobs:
     steps:
       # release-please acts on main as it is now, not on this commit. If main has moved on, a merged Release PR there
       # has not passed CI yet, so leave it to the newer commit's run.
-      - id: head
+      - name: Check main is at this commit
+        id: head
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           head=$(gh api "repos/$GITHUB_REPOSITORY/commits/main" --jq .sha)
           if [ "$head" = "$GITHUB_SHA" ]; then echo "latest=true" >> "$GITHUB_OUTPUT"; else echo "main is at $head; skipping"; fi
       # An App token, not GITHUB_TOKEN, so the Release PR triggers CI and can satisfy required checks.
-      - id: app
+      - name: Create release token
+        id: app
         if: steps.head.outputs.latest == 'true'
         uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
@@ -85,7 +103,8 @@ jobs:
           permission-issues: write
           # A tag on the release commit counts as creating its workflow files when a later main commit changed one.
           permission-workflows: write
-      - id: release
+      - name: Run release-please
+        id: release
         if: steps.head.outputs.latest == 'true'
         uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
@@ -94,6 +113,7 @@ jobs:
           manifest-file: .release-please-manifest.json
 
   promote:
+    name: Promote
     needs: [release, image]
     if: needs.release.outputs.release_created == 'true'
     permissions: { contents: read, packages: write }
@@ -103,6 +123,7 @@ jobs:
       images: backend migrations
 
   smoke:
+    name: Smoke
     needs: [release, promote]
     if: needs.release.outputs.release_created == 'true'
     permissions: { contents: read, packages: read }

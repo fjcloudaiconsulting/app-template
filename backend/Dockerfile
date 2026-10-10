@@ -1,5 +1,5 @@
-# syntax=docker/dockerfile:1
-FROM python:3.13-slim@sha256:bb2988715db2cf7ace7b53f38f3cffbef7c7046a656bee66245eb0ed386e2e81 AS prod
+# syntax=mirror.gcr.io/docker/dockerfile:1@sha256:4edf897a3ffa55b89f906fc8cc78afdb3f1834cc9c7083565e611a8a7d5fe99e
+FROM mirror.gcr.io/library/python:3.13-slim@sha256:bb2988715db2cf7ace7b53f38f3cffbef7c7046a656bee66245eb0ed386e2e81 AS prod
 RUN useradd --system --uid 10001 --no-create-home app
 WORKDIR /app
 COPY app.py .

@@ -15,20 +15,35 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  repo:
+    name: Repo Checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Docker Hub rate-limits anonymous pulls from shared runners: pull through mirror.gcr.io.
+      - name: No Docker Hub images
+        uses: fjcloudaiconsulting/.github/actions/no-docker-hub@v1
+
   test:
-    name: Test
+    name: Backend Tests
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - run: python3 -m unittest
+      - name: Run backend tests
+        run: python3 -m unittest
 
   # Built once, on the main push, as sha-<7> (pull requests build without pushing). Release only retags these.
   image:
+    name: Image (${{ matrix.image }})
     strategy:
       matrix:
         include:
@@ -45,18 +60,19 @@ jobs:
   backend-checks:
     name: Backend Checks
     if: always()
-    needs: [test, image]
+    needs: [repo, test, image]
     runs-on: ubuntu-latest
     steps:
-      - env:
+      - name: Verify every gated job passed
+        env:
           NEEDS: ${{ toJSON(needs) }}
         run: jq -e 'all(.[]; .result == "success" or .result == "skipped")' <<<"$NEEDS"
 
   # Releases only when every job above passed on this commit of main.
   release:
-    name: Release PR and tag
+    name: Release
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [test, image]
+    needs: [repo, test, image]
     runs-on: ubuntu-latest
     environment: release
     permissions:

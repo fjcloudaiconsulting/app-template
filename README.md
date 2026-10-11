@@ -53,5 +53,5 @@ database to `compose.yaml` and `compose.smoke.yaml`.
 ## Adding a frontend
 
 Follow [ziftbook](https://github.com/fjcloudaiconsulting/ziftbook): a `frontend/` directory, a `frontend`
-image in the `image` matrix, `promote` images, a `Frontend Checks` gate, and a frontend service in
-`compose.smoke.yaml`.
+image in the `image` matrix, `frontend` in the `release` job's `images`, a `Frontend Checks` gate (and in the
+`release` job's `needs`), and a frontend service in `compose.smoke.yaml`.

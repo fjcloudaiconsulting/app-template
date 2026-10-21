@@ -49,7 +49,8 @@ jobs:
         include:
           - { image: backend, target: prod }
           - { image: migrations, target: migrations }
-    permissions: { contents: read, packages: write }
+    # id-token and attestations: build-image signs the image's build provenance (verified before release).
+    permissions: { contents: read, packages: write, id-token: write, attestations: write }
     uses: fjcloudaiconsulting/.github/.github/workflows/build-image.yml@v1
     with:
       image: ${{ matrix.image }}
@@ -79,6 +80,7 @@ jobs:
       checks: read
       pull-requests: read
       packages: write
+      attestations: read # the nested promote verifies each image's provenance before retagging it
     uses: fjcloudaiconsulting/.github/.github/workflows/release.yml@v1
     with:
       images: backend migrations
